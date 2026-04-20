@@ -17,9 +17,6 @@ def scrape_kworb():
         
     df["chart_date"] = chart_date
     df["loaded_at"] = datetime.now().isoformat()
-
-    df["Artist"] = df["Artist and Title"].apply(lambda x: x.split(" - ")[0])
-    df["Title"] = df["Artist and Title"].apply(lambda x: x.split(" - ")[1])
     
     return df, title
 
