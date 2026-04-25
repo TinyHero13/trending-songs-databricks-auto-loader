@@ -1,0 +1,57 @@
+bundle:
+  name: trending_songs_data
+  uuid: 55a8349a-75ab-48a1-bf9e-498a0077af9d
+
+include:
+  - resources/*.yml
+
+variables:
+  warehouse_id:
+    description: SQL warehouse ID for SQL tasks (if needed by future jobs)
+    default: 5eeb75db0ebdeeae
+
+  catalog:
+    description: Unity Catalog name used by all data layers
+    default: songs_trending
+  raw_schema:
+    description: Schema for raw ingestion tables from the extract pipeline
+    default: raw
+  bronze_schema:
+    description: Schema for bronze transformation tables
+    default: bronze
+  silver_schema:
+    description: Schema for silver transformation tables
+    default: silver
+  gold_schema:
+    description: Schema for gold transformation tables
+    default: gold
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://8259553112249224.4.gcp.databricks.com
+    variables:
+      warehouse_id: 5eeb75db0ebdeeae
+      catalog: songs_trending
+      raw_schema: raw
+      bronze_schema: bronze
+      silver_schema: silver
+      gold_schema: gold
+
+  prod:
+    mode: production
+    workspace:
+      host: https://8259553112249224.4.gcp.databricks.com
+      root_path: /Workspace/Users/yasmimabrahao13@gmail.com/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      warehouse_id: 5eeb75db0ebdeeae
+      catalog: songs_trending
+      raw_schema: raw
+      bronze_schema: bronze
+      silver_schema: silver
+      gold_schema: gold
+    permissions:
+      - user_name: yasmimabrahao13@gmail.com
+        level: CAN_MANAGE
