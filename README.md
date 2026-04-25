@@ -1,114 +1,101 @@
-# Trending Songs
+# Trending Songs Data Pipeline
 
-## Overview
+A practical project to validate ingestion and transformation patterns with Delta Live Tables (DLT), Auto Loader, and Google Cloud Storage. Data flows from raw Parquet files through bronze, silver, and gold layers, fully orchestrated by a Databricks job.
 
-This project builds an ingestion pipeline for worldwide trending songs from Kworb.
-
-1. `src/extract_songs.py` scrapes the Kworb chart and writes Parquet files to `data/`.
-2. `src/load_files.py` uploads Parquet files to the GCS bucket `songs-trending-data`.
-3. Databricks Autoloader reads files from `gs://songs-trending-data`.
-4. The Databricks pipeline writes to catalog `songs_trending`, schema `raw`.
+In this architecture, extraction and upload to GCS run outside Databricks
 
 ## Architecture
-
 ```mermaid
-flowchart LR
-    A[Kworb] -->|scrape| B[Local Parquet]
-    B -->|upload| C[GCS bucket]
-    C -->|Autoloader| D[Databricks Delta]
+flowchart TD
+    B[extract_songs.py]
+    B --> C[Parquet Files]
+    C --> D[load_files.py]
+    D --> E[(GCS\nLanding Zone)]
+    E --> F[Auto Loader]
+    F --> G[Bronze]
+    G --> H[Silver]
+    H --> I[Gold]
+ 
+    subgraph Cloud
+        B
+        C
+        D
+    end
+ 
+    subgraph Databricks DLT Pipeline
+        F
+        G
+        H
+        I
+    end
 ```
+
+Local Python scripts collect source data and write Parquet files. Those files are uploaded to GCS, where Auto Loader picks them up incrementally and feeds them into DLT pipelines. A Databricks Asset Bundle job orchestrates the full sequence.
 
 ## Project Structure
 
-1. `src/extract_songs.py`: Scrapes Kworb and writes Parquet output.
-2. `src/load_files.py`: Uploads local Parquet files to GCS.
-3. `src/autoloader_folder/transformations/ingest_songs_files.py`: Databricks Autoloader table definition.
-4. `data/`: Local Parquet output folder.
+1. `src/extract_songs.py`: fetches and prepares source data.
+2. `src/load_files.py`: uploads generated files to GCS.
+3. `src/extract_files_gcs/transformations/auto_loader_extraction.py`: Auto Loader ingestion logic.
+4. `src/songs_transformation/transformations/*.sql`: bronze, silver, and gold transformations.
+5. `resources/pipelines.yml`: DLT pipeline definitions.
+6. `resources/jobs.yml`: job orchestration and task dependencies.
+7. `databricks.yml`: Databricks Asset Bundle configuration.
 
 ## Prerequisites
 
 1. Python 3.13 or newer.
 2. `uv` installed.
 3. Google Cloud SDK (`gcloud`) installed.
-4. Access to a Google Cloud project and a target GCS bucket.
+4. Databricks CLI installed and configured.
+5. Access to a Google Cloud project and a target GCS bucket.
 
 ## Setup
 
-1. Install dependencies.
+1. Install project dependencies.
 
 ```bash
 uv sync
 ```
 
-## Authentication (ADC)
-
-The uploader uses Google Application Default Credentials.
-
-1. Log in with your Google account.
+2. Authenticate with Google Cloud.
 
 ```bash
 gcloud auth login
-```
-
-2. Set your active Google Cloud project.
-
-```bash
 gcloud config set project <YOUR_PROJECT_ID>
-```
-
-3. Create local ADC credentials.
-
-```bash
 gcloud auth application-default login
 ```
 
 ## Usage
 
-1. Extract songs and generate Parquet files.
+1. Run extraction and upload outside Databricks.
+
+You can run this locally:
 
 ```bash
 uv run python src/extract_songs.py
-```
-
-2. Confirm a Parquet file was generated under `data/`.
-
-3. Upload Parquet files to GCS.
-
-```bash
 uv run python src/load_files.py
 ```
 
-## Databricks Autoloader
+You can also run the same scripts in Cloud Run Job orchestration.
 
-The Autoloader logic is defined in `src/autoloader_folder/transformations/ingest_songs_files.py`.
+2. Validate the Databricks bundle.
 
-1. It uses `spark.readStream.format("cloudFiles")`.
-2. It reads Parquet files from `gs://songs-trending-data`.
-3. It creates the streaming table `raw_trending_songs`.
-4. In Databricks, configure the pipeline target as catalog `songs_trending` and schema `raw`.
+```bash
+databricks bundle validate
+```
 
-## Databricks UI
+3. Deploy the bundle.
 
-Selecting catalog and schema:
+```bash
+databricks bundle deploy -p gcp-projects
+```
 
-You can schedule the Autoloader pipeline in the Databricks UI to keep ingestion running automatically.
+4. Run the Databricks job that processes raw, bronze, silver, and gold layers.
 
-1. Open your pipeline in Databricks UI.
-2. Set target catalog to `songs_trending` and schema to `raw`.
-3. Add a schedule for continuous or periodic ingestion.
-
-![Pipeline step 1](docs/images/image.png)
-
-Pipeline finished running:
-
-![Pipeline step 2](docs/images/image-1.png)
-
-## Databricks Autoloader Target
-
-Autoloader writes the ingested files to:
-
-1. Catalog: `songs_trending`
-2. Schema: `raw`
+```bash
+databricks bundle run -p gcp-projects trending_songs_data_job
+```
 
 ## Reference
 
