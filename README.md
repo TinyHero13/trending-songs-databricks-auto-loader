@@ -1,6 +1,6 @@
 # Trending Songs Data Pipeline
 
-A practical project to validate ingestion and transformation patterns with Delta Live Tables (DLT), Auto Loader, and Google Cloud Storage. Data flows from raw Parquet files through bronze, silver, and gold layers, fully orchestrated by a Databricks job.
+An ingestion and transformation for trending songs with Delta Live Tables (DLT), Auto Loader, and Google Cloud Storage. Data flows from raw Parquet files through bronze, silver, and gold layers, fully orchestrated by a Databricks job.
 
 In this architecture, extraction and upload to GCS run outside Databricks
 
