@@ -7,5 +7,5 @@ AS SELECT
   , Artist
   , Title
   , DaysPosition
-FROM STREAM(bronze_trending_songs)
+FROM STREAM(songs_trending.bronze.bronze_trending_songs)
 WHERE Artist IS NOT NULL AND Title IS NOT NULL

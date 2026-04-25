@@ -4,5 +4,5 @@ AS SELECT
   , Title
   , MAX(DaysPosition) AS DaysOnChart
   , MIN(SongPosition) AS BestPosition
-FROM STREAM(silver_trending_songs)
+FROM STREAM(songs_trending.silver.silver_trending_songs)
 GROUP BY Artist, Title
