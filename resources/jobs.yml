@@ -1,0 +1,35 @@
+resources:
+  jobs:
+    trending_songs_data_job:
+      name: trending_songs_data_job
+
+      schedule:
+        quartz_cron_expression: "0 0 8 * * ?"
+        timezone_id: UTC
+
+      email_notifications:
+        on_failure:
+          - yasmimabrahao13@gmail.com
+
+      tasks:
+        - task_key: run_extract_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.trending_songs_data_pipeline_extract.id}
+
+        - task_key: run_bronze_pipeline
+          depends_on:
+            - task_key: run_extract_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.trending_songs_data_pipeline_transform_bronze.id}
+
+        - task_key: run_silver_pipeline
+          depends_on:
+            - task_key: run_bronze_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.trending_songs_data_pipeline_transform_silver.id}
+
+        - task_key: run_gold_pipeline
+          depends_on:
+            - task_key: run_silver_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.trending_songs_data_pipeline_transform_gold.id}

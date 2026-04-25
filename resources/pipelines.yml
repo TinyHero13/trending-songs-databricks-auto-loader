@@ -1,0 +1,41 @@
+resources:
+  pipelines:
+    trending_songs_data_pipeline_extract:
+      name: trending_songs_data_pipeline_extract_${bundle.target}
+      catalog: ${var.catalog}
+      target: ${var.raw_schema}
+      serverless: true
+      libraries:
+        - file:
+            path: ../src/extract_files_gcs/transformations/auto_loader_extraction.py
+
+    trending_songs_data_pipeline_transform_bronze:
+      name: trending_songs_data_pipeline_transform_bronze_${bundle.target}
+      catalog: ${var.catalog}
+      target: ${var.bronze_schema}
+      serverless: true
+      libraries:
+        - file:
+            path: ../src/songs_transformation/transformations/bronze_layer.sql
+
+    trending_songs_data_pipeline_transform_silver:
+      name: trending_songs_data_pipeline_transform_silver_${bundle.target}
+      catalog: ${var.catalog}
+      target: ${var.silver_schema}
+      serverless: true
+      libraries:
+        - file:
+            path: ../src/songs_transformation/transformations/silver_layer.sql
+
+    trending_songs_data_pipeline_transform_gold:
+      name: trending_songs_data_pipeline_transform_gold_${bundle.target}
+      catalog: ${var.catalog}
+      target: ${var.gold_schema}
+      serverless: true
+      libraries:
+        - file:
+            path: ../src/songs_transformation/transformations/gold_layer.sql
+        - file:
+            path: ../src/songs_transformation/transformations/gold_top_songs.sql
+        - file:
+            path: ../src/songs_transformation/transformations/gold_top_artists.sql
